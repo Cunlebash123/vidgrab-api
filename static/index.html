@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Video Downloader</title>
+<link rel="icon" type="image/jpeg" href="/icon.jpg">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;width:100%;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;color:#202124;}
+button,input,select{font-family:inherit;}
+button{cursor:pointer;}
+
+.app{width:100%;min-height:100vh;padding-bottom:75px;}
+
+.topbar{position:sticky;top:0;z-index:1000;height:64px;width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#ffffff;border-bottom:1px solid #dedede;}
+.brand{display:flex;align-items:center;gap:11px;}
+.logo{width:38px;height:38px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;}
+.logo img{width:100%;height:100%;object-fit:cover;display:block;}
+.brand-text{font-size:18px;font-weight:bold;}
+.brand-sub{font-size:11px;color:#888;margin-top:2px;}
+.menu-btn{width:48px;height:48px;border:0;background:#222;font-size:26px;font-weight:bold;line-height:1;color:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.18);}
+.menu-btn:active{background:#000;transform:scale(.96);}
+
+.main{width:100%;max-width:720px;margin:auto;padding:22px 14px;}
+
+.card{background:#fff;border:1px solid #ddd;border-radius:18px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:15px;}
+.heading{margin-bottom:18px;}
+.heading h1{font-size:24px;margin:0 0 7px;}
+.heading p{margin:0;color:#777;font-size:14px;line-height:1.5;}
+
+.label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px;}
+.input-row{display:flex;width:100%;border:1px solid #cfcfcf;border-radius:16px;overflow:hidden;background:#fff;}
+.url-input{flex:1;min-width:0;height:50px;border:0;outline:0;padding:0 13px;font-size:14px;color:#222;}
+.paste-btn{width:70px;border:0;border-left:1px solid #ddd;background:#f7f7f7;color:#333;font-weight:bold;}
+.paste-btn:active{background:#e7e7e7;}
+
+.fetch-btn{width:100%;height:50px;margin-top:13px;border:0;border-radius:16px;background:#222;color:white;font-size:15px;font-weight:bold;}
+.fetch-btn:active{transform:scale(.99);background:#111;}
+.fetch-btn:disabled{opacity:.55;}
+
+.format-box{display:none;margin-top:13px;}
+.format-box select{width:100%;height:44px;border:1px solid #cfcfcf;border-radius:14px;padding:0 12px;font-size:14px;background:#fff;color:#222;}
+
+.download-btn{display:none;width:100%;height:50px;margin-top:13px;border:0;border-radius:16px;background:#222;color:white;font-size:15px;font-weight:bold;}
+.download-btn:active{transform:scale(.99);background:#111;}
+.download-btn:disabled{opacity:.55;}
+
+.preview{display:none;margin-top:18px;border:1px solid #ddd;border-radius:16px;overflow:hidden;background:#fafafa;}
+.preview-media{width:100%;max-height:300px;display:flex;align-items:center;justify-content:center;background:#111;}
+.preview-media img,.preview-media video{width:100%;max-height:300px;object-fit:contain;}
+.preview-info{padding:14px;}
+.file-name{font-size:15px;font-weight:bold;word-break:break-all;margin-bottom:6px;}
+.file-details{color:#777;font-size:12px;}
+
+.status{display:none;margin-top:18px;border:1px solid #ddd;border-radius:16px;padding:14px;background:#fafafa;}
+.status-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.status-title{font-size:14px;font-weight:bold;}
+.percent{font-size:13px;color:#666;}
+.progress-track{width:100%;height:8px;background:#ddd;border-radius:20px;overflow:hidden;}
+.progress-bar{width:0%;height:100%;background:#222;transition:width .15s linear;}
+.status-message{margin-top:9px;color:#777;font-size:12px;}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:20px 3px 10px;}
+.section-title h2{font-size:17px;margin:0;}
+.clear-btn{border:0;background:transparent;color:#666;font-size:12px;}
+.clear-btn:active{color:#111;}
+
+.download-list{display:flex;flex-direction:column;gap:8px;}
+.download-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #ddd;border-radius:16px;padding:12px;}
+.file-icon{width:43px;height:43px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#eee;border-radius:12px;font-size:20px;}
+.item-info{flex:1;min-width:0;}
+.item-name{font-size:13px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.item-meta{margin-top:4px;font-size:11px;color:#888;}
+.item-action{border:0;background:transparent;font-size:22px;font-weight:bold;color:#333;}
+
+.empty{text-align:center;background:#fff;border:1px solid #ddd;border-radius:16px;padding:28px 15px;color:#888;font-size:13px;}
+
+.overlay{position:fixed;inset:0;z-index:2000;display:none;background:rgba(0,0,0,.35);}
+.overlay.show{display:block;}
+.drawer{position:absolute;top:0;right:0;width:285px;max-width:85%;height:100%;background:#fff;box-shadow:-3px 0 12px rgba(0,0,0,.15);padding:20px;}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid #ddd;}
+.drawer-title{font-size:18px;font-weight:bold;}
+.close-btn{width:38px;height:38px;border:0;border-radius:50%;background:#f2f2f2;font-size:20px;}
+.menu-section{padding:18px 0;border-bottom:1px solid #eee;}
+.menu-label{font-size:12px;color:#888;margin-bottom:12px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;min-height:45px;font-size:14px;}
+.setting-info{padding-right:10px;}
+.setting-name{font-weight:bold;}
+.setting-desc{font-size:11px;color:#888;margin-top:3px;}
+.toggle{width:44px;height:24px;border-radius:20px;border:0;background:#ccc;position:relative;}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;}
+.toggle.active{background:#222;}
+.toggle.active::after{left:23px;}
+
+.footer{text-align:center;padding:20px;color:#999;font-size:11px;}
+
+body.dark{background:#151515;color:#eee;}
+body.dark .topbar,body.dark .card,body.dark .download-item,body.dark .empty,body.dark .drawer{background:#202020;color:#eee;}
+body.dark .topbar,body.dark .card,body.dark .download-item,body.dark .empty{border-color:#333;}
+body.dark .input-row{background:#1b1b1b;border-color:#444;}
+body.dark .url-input{background:#1b1b1b;color:#eee;}
+body.dark .paste-btn{background:#292929;color:#eee;border-color:#444;}
+body.dark .status{background:#202020;border-color:#333;}
+body.dark .fetch-btn,body.dark .download-btn{background:#eee;color:#111;}
+body.dark .file-icon{background:#303030;}
+body.dark .heading p,body.dark .file-details,body.dark .status-message,body.dark .item-meta{color:#aaa;}
+body.dark .drawer-header,body.dark .menu-section{border-color:#333;}
+body.dark .close-btn{background:#333;color:#eee;}
+body.dark .menu-btn{background:#eee;color:#111;box-shadow:0 2px 6px rgba(0,0,0,.5);}
+body.dark .item-action{color:#eee;}
+body.dark .format-box select{background:#1b1b1b;color:#eee;border-color:#444;}
+
+@media(min-width:700px){.main{padding-top:40px;}.fetch-btn,.download-btn{height:52px;}}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<header class="topbar">
+    <div class="brand">
+        <div class="logo"><img src="/icon.jpg" alt="logo"></div>
+        <div>
+            <div class="brand-text">Video Downloader</div>
+            <div class="brand-sub">Simple &amp; Fast</div>
+        </div>
+    </div>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+</header>
+
+<main class="main">
+    <section class="card">
+        <div class="heading">
+            <h1>Download Video</h1>
+            <p>Paste any video link — YouTube, TikTok, Instagram, Facebook and more.</p>
+        </div>
+
+        <label class="label">Video URL</label>
+        <div class="input-row">
+            <input id="videoUrl" class="url-input" type="url" placeholder="Paste video link here..." autocomplete="off" spellcheck="false">
+            <button class="paste-btn" onclick="pasteUrl()">Paste</button>
+        </div>
+
+        <button id="fetchBtn" class="fetch-btn" onclick="fetchInfo()">Get Video Info</button>
+
+        <div id="formatBox" class="format-box">
+            <label class="label">Choose Quality</label>
+            <select id="formatSelect"></select>
+        </div>
+
+        <button id="downloadBtn" class="download-btn" onclick="startDownload()">Download Video</button>
+
+        <div id="preview" class="preview">
+            <div id="previewMedia" class="preview-media"></div>
+            <div class="preview-info">
+                <div id="fileName" class="file-name">Video</div>
+                <div id="fileDetails" class="file-details">Waiting for video information...</div>
+            </div>
+        </div>
+
+        <div id="status" class="status">
+            <div class="status-top">
+                <div class="status-title">Downloading</div>
+                <div id="percent" class="percent">0%</div>
+            </div>
+            <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+            <div id="statusMessage" class="status-message">Preparing...</div>
+        </div>
+    </section>
+
+    <div class="section-title">
+        <h2>Completed Downloads</h2>
+        <button class="clear-btn" onclick="clearHistory()">Clear</button>
+    </div>
+
+    <div id="downloadList" class="download-list"></div>
+    <div id="emptyDownloads" class="empty">No completed downloads yet.</div>
+
+    <div class="footer">Video Downloader</div>
+</main>
+</div>
+
+<div id="overlay" class="overlay" onclick="closeMenu(event)">
+    <aside class="drawer">
+        <div class="drawer-header">
+            <div class="drawer-title">Settings</div>
+            <button class="close-btn" onclick="closeMenu()">×</button>
+        </div>
+        <div class="menu-section">
+            <div class="menu-label">APPEARANCE</div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="setting-name">Dark mode</div>
+                    <div class="setting-desc">Use a darker interface</div>
+                </div>
+                <button id="darkToggle" class="toggle" onclick="toggleDarkMode(this)"></button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+const BACKEND = "";
+const HISTORY_KEY = "vidgrab_history";
+
+const urlInput = document.getElementById("videoUrl");
+const fetchBtn = document.getElementById("fetchBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const formatBox = document.getElementById("formatBox");
+const formatSelect = document.getElementById("formatSelect");
+const preview = document.getElementById("preview");
+const previewMedia = document.getElementById("previewMedia");
+const fileName = document.getElementById("fileName");
+const fileDetails = document.getElementById("fileDetails");
+const status = document.getElementById("status");
+const progressBar = document.getElementById("progressBar");
+const percent = document.getElementById("percent");
+const statusMessage = document.getElementById("statusMessage");
+const downloadList = document.getElementById("downloadList");
+const emptyDownloads = document.getElementById("emptyDownloads");
+
+let currentInfo = null;
+
+async function pasteUrl(){
+    try{
+        const text = await navigator.clipboard.readText();
+        if(text && text.trim()){
+            urlInput.value = text.trim();
+            return;
+        }
+    }catch(e){}
+
+    urlInput.focus();
+    urlInput.select();
+    alert("Your browser blocks automatic paste.\n\nLong-press the URL box and tap 'Paste'.");
+}
+
+async function fetchInfo(){
+    const url = urlInput.value.trim();
+    if(!url) return alert("Please paste a video URL first.");
+
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = "Fetching info...";
+    downloadBtn.style.display = "none";
+    formatBox.style.display = "none";
+    preview.style.display = "none";
+
+    try{
+        const res = await fetch(BACKEND + "/info", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({url})
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || "Failed to fetch info");
+
+        currentInfo = data;
+
+        fileName.textContent = data.title || "Video";
+        fileDetails.textContent =
+            (data.uploader ? data.uploader + " • " : "") +
+            (data.duration ? data.duration + "s • " : "") +
+            (data.formats ? data.formats.length + " formats" : "");
+
+        previewMedia.innerHTML = "";
+        if(data.thumbnail){
+            const img = document.createElement("img");
+            img.src = data.thumbnail;
+            previewMedia.appendChild(img);
+        }else{
+            previewMedia.innerHTML =
+                '<div style="color:#aaa;padding:40px;text-align:center;">No preview available</div>';
+        }
+        preview.style.display = "block";
+
+        formatSelect.innerHTML = "";
+        (data.formats || []).forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.format_id;
+            const size = f.filesize ? " • " + formatBytes(f.filesize) : "";
+            opt.textContent = (f.resolution || "video") + " • " + f.ext + size;
+            formatSelect.appendChild(opt);
+        });
+
+        if(data.formats && data.formats.length){
+            formatBox.style.display = "block";
+            downloadBtn.style.display = "block";
+        }
+    }catch(e){
+        alert("Error: " + e.message);
+    }finally{
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = "Get Video Info";
+    }
+}
+
+async function startDownload(){
+    if(!currentInfo) return;
+    const url = urlInput.value.trim();
+    const format_id = formatSelect.value;
+
+    status.style.display = "block";
+    progressBar.style.width = "0%";
+    percent.textContent = "0%";
+    statusMessage.textContent = "Starting download...";
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = "Downloading...";
+
+    try{
+        const res = await fetch(BACKEND + "/download", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({url, format_id})
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.error || "Failed to start");
+
+        const jobId = data.job_id;
+        pollProgress(jobId, url, currentInfo.title);
+
+    }catch(e){
+        alert("Error: " + e.message);
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = "Download Video";
+        statusMessage.textContent = "Failed to start download.";
+    }
+}
+
+function pollProgress(jobId, url, title){
+    const timer = setInterval(async () => {
+        try{
+            const res = await fetch(BACKEND + "/progress/" + jobId);
+            const job = await res.json();
+
+            if(job.progress){
+                percent.textContent = job.progress;
+                progressBar.style.width = job.progress;
+            }
+            statusMessage.textContent =
+                "Downloaded " + (job.downloaded || "0 B") +
+                " of " + (job.total || "?");
+
+            if(job.status === "done"){
+                clearInterval(timer);
+                statusMessage.textContent = "Saving file...";
+                const a = document.createElement("a");
+                a.href = BACKEND + "/file/" + jobId;
+                a.download = "";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                addHistory(title || "video", url, job.total || "?");
+                renderHistory();
+
+                statusMessage.textContent = "Download complete.";
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = "Download Video";
+            }else if(job.status === "error"){
+                clearInterval(timer);
+                statusMessage.textContent = "Download error: " + (job.error || "unknown");
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = "Download Video";
+            }
+        }catch(e){
+            clearInterval(timer);
+            statusMessage.textContent = "Lost connection to backend.";
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = "Download Video";
+        }
+    }, 800);
+}
+
+function formatBytes(bytes){
+    if(!bytes || bytes <= 0) return "0 B";
+    const units = ["B","KB","MB","GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    const v = bytes / Math.pow(1024, i);
+    return v.toFixed(i === 0 ? 0 : 2) + " " + units[i];
+}
+
+function getHistory(){
+    try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch(e){ return []; }
+}
+
+function addHistory(name, url, size){
+    const history = getHistory();
+    history.unshift({name, url, size, date: new Date().toLocaleString()});
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0,30)));
+}
+
+function renderHistory(){
+    const history = getHistory();
+    downloadList.innerHTML = "";
+    if(!history.length){
+        emptyDownloads.style.display = "block";
+        return;
+    }
+    emptyDownloads.style.display = "none";
+    history.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "download-item";
+
+        const icon = document.createElement("div");
+        icon.className = "file-icon";
+        icon.textContent = "▶";
+
+        const info = document.createElement("div");
+        info.className = "item-info";
+
+        const name = document.createElement("div");
+        name.className = "item-name";
+        name.textContent = item.name;
+
+        const meta = document.createElement("div");
+        meta.className = "item-meta";
+        meta.textContent = item.size + " • " + item.date;
+
+        info.appendChild(name);
+        info.appendChild(meta);
+
+        const action = document.createElement("button");
+        action.className = "item-action";
+        action.textContent = "⋮";
+        action.onclick = () => alert("File: " + item.name + "\n\n" + item.url + "\n\n" + item.date);
+
+        row.appendChild(icon);
+        row.appendChild(info);
+        row.appendChild(action);
+        downloadList.appendChild(row);
+    });
+}
+
+function clearHistory(){
+    if(!confirm("Clear all download history?")) return;
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+}
+
+function openMenu(){ document.getElementById("overlay").classList.add("show"); }
+function closeMenu(e){
+    if(e && e.target !== e.currentTarget) return;
+    document.getElementById("overlay").classList.remove("show");
+}
+
+function toggleDarkMode(btn){
+    document.body.classList.toggle("dark");
+    btn.classList.toggle("active");
+    localStorage.setItem("vidgrab_dark", document.body.classList.contains("dark"));
+}
+
+function loadSettings(){
+    if(localStorage.getItem("vidgrab_dark") === "true"){
+        document.body.classList.add("dark");
+        document.getElementById("darkToggle").classList.add("active");
+    }
+}
+
+loadSettings();
+renderHistory();
+</script>
+</body>
+</html>
