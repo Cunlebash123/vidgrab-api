@@ -1,8 +1,11 @@
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import yt_dlp, os, tempfile, uuid, threading
 
-app = Flask(__name__, static_folder="static", static_url_path="")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
 JOBS = {}
@@ -11,11 +14,11 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 @app.route("/")
 def index():
-    return send_from_directory("static", "index.html")
+    return send_file(os.path.join(STATIC_DIR, "index.html"))
 
 @app.route("/icon.jpg")
 def icon():
-    return send_from_directory("static", "icon.jpg")
+    return send_file(os.path.join(STATIC_DIR, "icon.jpg"))
 
 @app.route("/info", methods=["POST"])
 def info():
@@ -97,4 +100,3 @@ def file(job_id):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-  
